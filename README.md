@@ -69,7 +69,7 @@ Audio (22050 Hz)
 
 ```bash
 # Clone and install
-git clone <repo_url>
+git clone https://github.com/mjhydri/BeatNet-Plus.git
 cd beatnet_plus
 pip install -e .
 ```
