@@ -1,0 +1,55 @@
+# BeatNet+ Training Configuration — Auxiliary Freezing (AF)
+# =========================================================
+# Adapt a pre-trained BeatNet+ model to a new domain (e.g., singing voices, non-percussive).
+# The frozen teacher branch receives full mix; the student branch trains on target audio.
+# Paper: Section 3.2, Figure 2.
+#
+# Usage:
+#   python -m BeatNetPlus.train --config src/BeatNetPlus/configs/auxiliary_freezing.yaml \
+#       pretrained_weights=output/generic/best_model_weights.pt
+
+training_mode: auxiliary_freezing
+
+# Pre-trained model to use as frozen teacher
+pretrained_weights: null  # REQUIRED: path to pre-trained BeatNet+ main branch weights
+
+# Audio / feature extraction (same as generic)
+sample_rate: 22050
+hop_length: 441
+win_length: 1764
+n_bands: 24
+feature_dim: 288
+
+# Model architecture (same as generic)
+num_cells: 150
+num_layers: 4
+
+# Training hyperparameters
+batch_size: 40
+learning_rate: 0.0005
+seq_len: 750
+max_epochs: 5000
+patience: 20
+class_weights: [60, 200, 1]
+mse_lambda: 200.0
+seed: 42
+num_workers: 4
+
+# Dataset configuration
+data_dir: ./data
+datasets:
+  train: [BALLROOM, HAINSWORTH, MUSDB18, ROCK_CORPUS, RWC_POP, RWC_JAZZ, RWC_ROYALTY_FREE, URSING]
+  test: [GTZAN]
+dataset_weights: {}
+train_val_split: 0.9
+
+# Audio sources for AF training
+main_audio: vocal         # student branch: target domain (vocal, drumless_mix)
+aux_audio: mix            # teacher branch (frozen): full mix
+
+# Checkpointing and logging
+output_dir: ./output/af_vocal
+checkpoint_every: 10
+val_inference: DBN
+
+device: cpu

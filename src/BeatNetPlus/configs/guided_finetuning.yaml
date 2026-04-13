@@ -1,0 +1,60 @@
+# BeatNet+ Training Configuration — Guided Fine-Tuning (GF)
+# ==========================================================
+# Fine-tune a pre-trained BeatNet+ model on a target domain (e.g., singing voices)
+# with gradual data adaptation: accompanying music intensity is linearly reduced each epoch.
+# Paper: Section 3.3, Figure 3.
+#
+# Usage:
+#   python -m BeatNetPlus.train --config src/BeatNetPlus/configs/guided_finetuning.yaml \
+#       pretrained_weights=output/generic/best_model_weights.pt
+
+training_mode: guided_finetuning
+
+# Pre-trained model to initialize from
+pretrained_weights: null  # REQUIRED: path to pre-trained BeatNet+ main branch weights
+
+# Audio / feature extraction (same as generic)
+sample_rate: 22050
+hop_length: 441
+win_length: 1764
+n_bands: 24
+feature_dim: 288
+
+# Model architecture (same as generic)
+num_cells: 150
+num_layers: 4
+
+# Training hyperparameters
+batch_size: 40
+learning_rate: 0.0005
+seq_len: 750
+max_epochs: 5000
+patience: 20
+class_weights: [60, 200, 1]
+seed: 42
+num_workers: 4
+
+# Guided fine-tuning specific
+gf_decay_rate: 0.01      # gamma: fraction of accompaniment removed per epoch
+                          # At epoch e, accompaniment_scale = max(0, 1 - e * gf_decay_rate)
+                          # With 0.01: accompaniment fully removed by epoch 100
+
+# Dataset configuration
+data_dir: ./data
+datasets:
+  train: [BALLROOM, HAINSWORTH, MUSDB18, ROCK_CORPUS, RWC_POP, RWC_JAZZ, RWC_ROYALTY_FREE, URSING]
+  test: [GTZAN]
+dataset_weights: {}
+train_val_split: 0.9
+
+# Audio sources for GF training
+# The dataset returns: target_audio + accompaniment_scale * accompaniment_audio
+main_audio: vocal            # target domain audio (vocal stem)
+accompaniment_audio: drumless_mix  # accompaniment that gets faded out
+
+# Checkpointing and logging
+output_dir: ./output/gf_vocal
+checkpoint_every: 10
+val_inference: DBN
+
+device: cpu

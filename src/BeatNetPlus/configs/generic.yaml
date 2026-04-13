@@ -1,0 +1,61 @@
+# BeatNet+ Training Configuration — Generic Dual-Branch
+# ======================================================
+# Train the BeatNet+ model with main branch (full mix) + auxiliary branch (non-percussive).
+# Paper: Section 3.1.2, Equation 1.
+#
+# Usage:
+#   python -m BeatNetPlus.train --config src/BeatNetPlus/configs/generic.yaml
+#   python -m BeatNetPlus.train --config src/BeatNetPlus/configs/generic.yaml device=cuda
+
+# Training mode
+training_mode: generic   # generic | auxiliary_freezing | guided_finetuning
+
+# Audio / feature extraction
+sample_rate: 22050
+hop_length: 441          # 20ms at 22050Hz (50 fps)
+win_length: 1764         # 80ms at 22050Hz
+n_bands: 24
+feature_dim: 288         # filtered spectrogram (144) + spectral difference (144)
+
+# Model architecture
+num_cells: 150           # LSTM hidden size
+num_layers: 4            # LSTM layers (BeatNet+ uses 4, up from BeatNet's 2)
+
+# Training hyperparameters
+batch_size: 40
+learning_rate: 0.0005    # Adam optimizer
+seq_len: 750             # 15 seconds at 50fps
+max_epochs: 10000
+patience: 20             # early stopping patience (epochs without val improvement)
+class_weights: [60, 200, 1]  # cross-entropy weights for [beat, downbeat, non-beat]
+mse_lambda: 200.0        # weight for MSE latent-matching loss between branches
+seed: 42
+num_workers: 4
+
+# Dataset configuration
+data_dir: ./data
+datasets:
+  train: [BALLROOM, HAINSWORTH, MUSDB18, ROCK_CORPUS, RWC_POP, RWC_JAZZ, RWC_ROYALTY_FREE, URSING]
+  test: [GTZAN]
+dataset_weights:
+  BALLROOM: 1
+  HAINSWORTH: 1
+  MUSDB18: 1
+  ROCK_CORPUS: 1
+  RWC_POP: 1
+  RWC_JAZZ: 1
+  RWC_ROYALTY_FREE: 1
+  URSING: 1
+train_val_split: 0.9
+
+# Audio sources for dual-branch training
+main_audio: mix          # main branch input: mix
+aux_audio: drumless_mix  # auxiliary branch input: drumless_mix, vocal
+
+# Checkpointing and logging
+output_dir: ./output/generic
+checkpoint_every: 10
+val_inference: DBN       # PF or DBN for validation decoding
+
+# Device
+device: cpu
