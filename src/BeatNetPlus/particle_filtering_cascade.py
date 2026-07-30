@@ -272,11 +272,12 @@ class particle_filter_cascade:
                 
                 # downbeat particles correction
                 if both_activations[i][1]>0.7:
-                    self.down_particles = np.append(self.down_particles,np.array([self.st2.first_states]))
+                    injected2 = self.st2.first_states[0]
+                    self.down_particles = np.append(self.down_particles, injected2)
                 obs2 = down_densities(both_activations[i], self.om2, self.st2)
                 self.down_particles = universal_resample(self.down_particles, obs2[self.down_particles])  
                 if both_activations[i][1]>0.7:
-                    self.down_particles = np.delete(self.down_particles, np.random.choice(self.down_particle_size, len(self.st2.first_states), replace=False))
+                    self.down_particles = np.delete(self.down_particles, np.random.choice(len(self.down_particles), injected2.size, replace=False))
                 m = np.bincount(self.down_particles)
                 self.down_max = np.argmax(m)  # calculating downbeat particles clutter
                 
@@ -307,10 +308,11 @@ class particle_filter_cascade:
             obs = beat_densities(activations[i], self.om, self.st)
             if activations[i] > 0.1:  # resampling is done only when there is a meaningful activation
                 if activations[i] > 0.8:
-                    self.particles = np.append(self.particles,np.array([self.st.first_states[0][np.arange(np.random.randint(4),len(self.st.first_states[0]),6)]]))
+                    injected = self.st.first_states[0][np.arange(np.random.randint(4),len(self.st.first_states[0]),6)]
+                    self.particles = np.append(self.particles, injected)
                 self.particles = universal_resample(self.particles, obs[self.particles], )  # beat correction
                 if activations[i] > 0.8:
-                    np.delete(self.particles, np.random.choice(self.particle_size, len(self.st.first_states), replace=False))
+                    self.particles = np.delete(self.particles, np.random.choice(len(self.particles), injected.size, replace=False))
             if 'beat_particles' in self.plot:
                 if self.counter % 1 == 0:  # choosing how often to plot
                     self.beat_particles_plot()
